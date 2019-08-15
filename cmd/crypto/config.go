@@ -14,6 +14,13 @@
 
 package crypto
 
+const (
+	EnvKMSMode         = "MINIO_SSE_VAULT_MODE" // Setting this to "KV" enables the key-value store
+	EnvKMSKeyStorePath = "MINIO_SSE_VAULT_KEY_STORE_PATH"
+)
+
+var GlobalKeyStore KeyStore
+
 // KMSConfig has the KMS config for hashicorp vault
 type KMSConfig struct {
 	AutoEncryption bool        `json:"-"`

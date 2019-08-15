@@ -404,6 +404,22 @@ func (api objectAPIHandlers) DeleteMultipleObjectsHandler(w http.ResponseWriter,
 		return
 	}
 
+	if crypto.GlobalKeyStore != nil {
+		for _, object := range objectsToDelete {
+			objInfo, err := objectAPI.GetObjectInfo(ctx, bucket, object.name, ObjectOptions{})
+			if err != nil {
+				writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL, guessIsBrowserReq(r))
+				return
+			}
+			if crypto.IsEncrypted(objInfo.UserDefined) && crypto.S3.IsEncrypted(objInfo.UserDefined) {
+				if err = crypto.GlobalKeyStore.Delete(path.Join(bucket, object.name)); err != nil {
+					writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL, guessIsBrowserReq(r))
+					return
+				}
+			}
+		}
+	}
+
 	errs, err := deleteObjectsFn(ctx, bucket, toNames(objectsToDelete))
 	if err != nil {
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL, guessIsBrowserReq(r))

@@ -122,6 +122,7 @@ func (env environment) LookupKMSConfig(config crypto.KMSConfig) (err error) {
 	config.Vault.Auth.AppRole.Secret = env.Get(EnvVaultAppSecretID, config.Vault.Auth.AppRole.Secret)
 	config.Vault.Key.Name = env.Get(EnvVaultKeyName, config.Vault.Key.Name)
 	config.Vault.Namespace = env.Get(EnvVaultNamespace, config.Vault.Namespace)
+	config.Vault.KeyStore = env.Get(crypto.EnvKMSKeyStorePath, config.Vault.KeyStore)
 	keyVersion := env.Get(EnvVaultKeyVersion, strconv.Itoa(config.Vault.Key.Version))
 	config.Vault.Key.Version, err = strconv.Atoi(keyVersion)
 	if err != nil {
@@ -147,6 +148,10 @@ func (env environment) LookupKMSConfig(config crypto.KMSConfig) (err error) {
 			return err
 		}
 		globalKMSKeyID = config.Vault.Key.Name
+
+		if mode, ok := Environment.Lookup(crypto.EnvKMSMode); ok && mode == "KV" {
+			crypto.GlobalKeyStore = GlobalKMS.(crypto.KeyStore)
+		}
 	}
 
 	autoEncryption, err := ParseBoolFlag(env.Get(EnvAutoEncryption, "off"))

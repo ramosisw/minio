@@ -131,6 +131,7 @@ export VAULT_TOKEN=s.zaU4Gbcu0Wh46uj2V3VuUde0
 
 vault auth enable approle    # enable approle style auth
 vault secrets enable transit  # enable transit secrets engine
+vault secrets enable -version=1 kv # enable key-value storage
 # define an encryption key-ring for the transit path
 vault write -f  transit/keys/my-minio-key
 
@@ -143,6 +144,9 @@ path "transit/decrypt/my-minio-key" {
 }
 path "transit/rewrap/my-minio-key" {
   capabilities = ["update"]
+}
+path "kv/*" {
+  capabilities = ["read", "update", "create", "delete"]
 }
 
 EOF
@@ -179,6 +183,8 @@ export MINIO_SSE_VAULT_APPROLE_SECRET=edd8738c-6efe-c226-74f9-ef5b66e119d7
 export MINIO_SSE_VAULT_ENDPOINT=http://vault-endpoint-ip:8200
 export MINIO_SSE_VAULT_KEY_NAME=my-minio-key
 export MINIO_SSE_VAULT_AUTH_TYPE=approle
+export MINIO_SSE_VAULT_MODE=KV
+export MINIO_SSE_VAULT_KEY_STORE_PATH=kv
 minio server ~/export
 ```
 

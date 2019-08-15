@@ -26,6 +26,7 @@ import (
 	goioutil "io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -2346,6 +2347,20 @@ func (api objectAPIHandlers) DeleteObjectHandler(w http.ResponseWriter, r *http.
 	if vid := r.URL.Query().Get("versionId"); vid != "" && vid != "null" {
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrNoSuchVersion), r.URL, guessIsBrowserReq(r))
 		return
+	}
+
+	if crypto.GlobalKeyStore != nil {
+		objInfo, err := objectAPI.GetObjectInfo(ctx, bucket, object, ObjectOptions{})
+		if err != nil {
+			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL, guessIsBrowserReq(r))
+			return
+		}
+		if crypto.IsEncrypted(objInfo.UserDefined) && crypto.S3.IsEncrypted(objInfo.UserDefined) {
+			if err = crypto.GlobalKeyStore.Delete(path.Join(bucket, object)); err != nil {
+				writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL, guessIsBrowserReq(r))
+				return
+			}
+		}
 	}
 
 	// Deny if WORM is enabled

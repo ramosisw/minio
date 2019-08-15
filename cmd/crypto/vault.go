@@ -56,6 +56,7 @@ type VaultConfig struct {
 	Auth      VaultAuth `json:"auth"`     // The vault authentication configuration
 	Key       VaultKey  `json:"key-id"`   // The named key used for key-generation / decryption.
 	Namespace string    `json:"-"`        // The vault namespace of enterprise vault instances
+	KeyStore  string    `json:"-"`        // The key-value path - only set if Vault is used as Key-Value storage
 }
 
 // vaultService represents a connection to a vault KMS.
@@ -64,6 +65,7 @@ type vaultService struct {
 	client        *vault.Client
 	secret        *vault.Secret
 	leaseDuration time.Duration
+	keyStore      string
 }
 
 var _ KMS = (*vaultService)(nil) // compiler check that *vaultService implements KMS
@@ -121,7 +123,7 @@ func NewVault(config VaultConfig) (KMS, error) {
 	if config.Namespace != "" {
 		client.SetNamespace(config.Namespace)
 	}
-	v := &vaultService{client: client, config: &config}
+	v := &vaultService{client: client, config: &config, keyStore: config.KeyStore}
 	if err := v.authenticate(); err != nil {
 		return nil, err
 	}
